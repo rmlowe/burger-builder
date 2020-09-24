@@ -1,0 +1,37 @@
+- pipeline: "Deploy Client"
+  trigger_mode: "ON_EVERY_PUSH"
+  ref_name: "master"
+  ref_type: "BRANCH"
+  target_site_url: "https://burgers.rmlowe.com/"
+  auto_clear_cache: true
+  fail_on_prepare_env_warning: true
+  trigger_condition: "ALWAYS"
+  actions:
+  - action: "Execute: npm run build"
+    type: "BUILD"
+    working_directory: "/buddy/burger-builder"
+    docker_image_name: "library/node"
+    docker_image_tag: "12"
+    execute_commands:
+    - "npm install"
+    - "npm run build"
+    volume_mappings:
+    - "/:/buddy/burger-builder"
+    trigger_condition: "ALWAYS"
+    shell: "BASH"
+  - action: "Upload files to AWS S3/burgers.rmlowe.com"
+    type: "AMAZON_S3"
+    input_type: "BUILD_ARTIFACTS"
+    local_path: "/build"
+    bucket_name: "burgers.rmlowe.com"
+    acl: "PRIVATE"
+    integration_hash: "5f6cc30d782ac36a6f99375c"
+  - action: "Purge cache at E29I7S7WPVO4O1"
+    type: "CLOUD_FRONT"
+    input_type: "SCM_REPOSITORY"
+    distribution_id: "E29I7S7WPVO4O1"
+    purge_all: true
+    purge_by_change_set_limit: 10
+    trigger_condition: "ALWAYS"
+    timeout: 0
+    integration_hash: "5f6cc30d782ac36a6f99375c"
